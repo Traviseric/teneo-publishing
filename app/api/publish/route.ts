@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyPayment, getPaymentInfo } from "@/lib/arxmint-client";
 import { calculateCost, getPrice } from "@/lib/pricing";
 import { trackUsage } from "@/lib/usage-tracker";
-import { identifyAgent, anonymousAgent } from "@/lib/auth";
+import { identifyAgent, anonymousAgent, recordSpend } from "@/lib/auth";
 import { callLLM, usdToSats } from "@/lib/llm-client";
 import { generateImage, transformImage } from "@/lib/image-client";
 import type { PublishingCapability } from "@/lib/types";
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Identify the agent
-  const agent = identifyAgent(request.headers) || anonymousAgent();
+  const agent = (await identifyAgent(request.headers)) || anonymousAgent();
 
   // Check budget for registered agents
   if (!agent.canProceed) {
@@ -109,6 +109,11 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get("user-agent") || "unknown",
     },
   });
+
+  // Record spend against agent's monthly budget
+  if (agent.apiKey) {
+    void recordSpend(agent.apiKey, priceSats).catch(() => {});
+  }
 
   return NextResponse.json({
     success: true,

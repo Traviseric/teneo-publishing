@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "tier must be free, standard, or premium" }, { status: 400 });
   }
 
-  const agent = registerAgent(name, tier);
+  const agent = await registerAgent(name, tier);
 
   return NextResponse.json({
     success: true,

@@ -21,8 +21,7 @@ export async function GET(request: NextRequest) {
 
   switch (view) {
     case "patterns": {
-      // The gold mine — what are agents actually using this for?
-      const patterns = discoverPatterns();
+      const patterns = await discoverPatterns();
       return NextResponse.json({
         view: "patterns",
         description: "Agent usage patterns — sorted by frequency. Growing patterns = new product opportunities.",
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
       const since = searchParams.get("since")
         ? new Date(searchParams.get("since")!)
         : undefined;
-      const revenue = getRevenueSummary(since);
+      const revenue = await getRevenueSummary(since);
       return NextResponse.json({
         view: "revenue",
         ...revenue,
@@ -52,7 +51,7 @@ export async function GET(request: NextRequest) {
       const limit = Number(searchParams.get("limit")) || 50;
       const agentId = searchParams.get("agentId") || undefined;
       const capability = searchParams.get("capability") || undefined;
-      const log = getUsageLog({ limit, agentId, capability });
+      const log = await getUsageLog({ limit, agentId, capability });
       return NextResponse.json({
         view: "log",
         count: log.length,
@@ -62,9 +61,8 @@ export async function GET(request: NextRequest) {
     }
 
     default: {
-      // Summary view — high-level dashboard data
-      const revenue = getRevenueSummary();
-      const patterns = discoverPatterns();
+      const revenue = await getRevenueSummary();
+      const patterns = await discoverPatterns();
       return NextResponse.json({
         view: "summary",
         revenue: {
